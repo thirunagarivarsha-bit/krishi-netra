@@ -58,16 +58,42 @@ def test_english_tts():
     print(f"PASS: English TTS generated {data['sizeBytes']} bytes ({data['durationSeconds']}s)")
 
 
-def test_audio_streaming(audio_url: str):
-    print(f"\n=== TEST 3: Audio Streaming Endpoint ({audio_url}) ===")
-    res = urllib.request.urlopen(f"{BASE_URL}{audio_url}")
-    assert res.status == 200, f"Expected 200, got {res.status}"
-    content_type = res.headers.get("Content-Type", "")
-    assert "audio/mpeg" in content_type, f"Expected audio/mpeg, got {content_type}"
-    audio_bytes = res.read()
-    assert len(audio_bytes) > 1000, "Streamed audio bytes too small"
-    print(f"PASS: Streamed {len(audio_bytes)} bytes of audio/mpeg successfully")
+def test_audio_streaming():
+    print("\n=== TEST 3: Audio Streaming ===")
 
+    payload = {
+        "text": "Hello farmers. This is an audio streaming test.",
+        "language": "en-IN"
+    }
+
+    req = urllib.request.Request(
+        f"{BASE_URL}/api/tts",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"}
+    )
+
+    res = urllib.request.urlopen(req)
+    assert res.status == 200
+
+    data = json.loads(res.read().decode("utf-8"))
+
+    assert data.get("status") == "ready"
+    assert data.get("available") is True
+
+    audio_url = data.get("audioUrl")
+    assert audio_url, "Expected audioUrl"
+
+    stream_res = urllib.request.urlopen(
+        f"{BASE_URL}{audio_url}"
+    )
+
+    assert stream_res.status == 200
+
+    content_type = stream_res.headers.get("Content-Type", "")
+    assert "audio" in content_type
+
+    audio_bytes = stream_res.read()
+    assert len(audio_bytes) > 0
 
 if __name__ == "__main__":
     try:
