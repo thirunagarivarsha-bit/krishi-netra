@@ -15,7 +15,7 @@ import {
   BeforeAfterComparison
 } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://krishi-netra-k4nk.onrender.com';
 let useLiveBackend = true;
 
 export const setUseLiveBackend = (val: boolean) => {
