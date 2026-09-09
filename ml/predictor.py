@@ -11,6 +11,7 @@ import io
 import math
 import numpy as np
 from PIL import Image
+from ml.onnx_predictor import get_onnx_predictor
 
 # Load classes metadata
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -218,78 +219,301 @@ class AgriculturalReasoningEngine:
         if not crop_candidates:
             crop_candidates = DISEASE_CLASSES
 
-        # Step 4: Extract visual feature affinity
-        # In the absence of a GPU cluster, we compute real color/lesion signatures
-        lesion_pct = vitality["lesion_coverage_pct"]
-        gy_ratio = vitality["green_yellow_ratio"]
+                # Step 4: Real ResNet18 ONNX classification for paddy.
+        #
+        # The trained checkpoint is a paddy-only model. For paddy,
+        # use the real ONNX inference output instead of the legacy
+        # RGB heuristic disease scorer.
+        #
+        # Other crops remain on the existing contextual fallback until
+        # crop-specific models are trained and validated.
 
-        # Base scores
-        scores = {}
-        for c in crop_candidates:
-            base = 10.0
-            # Match symptoms
-            name_lower = c["name_en"].lower()
-            if "blast" in name_lower and ("మచ్చ" in user_notes or "spot" in user_notes or lesion_pct > 8):
-                base += 40.0
-            if "brown spot" in name_lower and ("brown" in user_notes or "గోధుమ" in user_notes or lesion_pct > 5):
-                base += 35.0
-            if "blight" in name_lower and ("ఎండు" in user_notes or "blight" in user_notes or gy_ratio < 1.0):
-                base += 38.0
-            if "curl" in name_lower and ("ముడత" in user_notes or "curl" in user_notes):
-                base += 45.0
-            if "rust" in name_lower and ("తుప్పు" in user_notes or "rust" in user_notes):
-                base += 42.0
-            if "healthy" in name_lower:
-                if lesion_pct < 3.0 and gy_ratio > 2.0:
-                    base += 60.0
-                else:
-                    base = 5.0
-            
-            scores[c["id"]] = base + (c["id"] * 3.7) % 15.0
+        if crop == "paddy":
+            onnx_predictor = get_onnx_predictor()
+            model_prediction = onnx_predictor.predict(
+                img,
+                top_k=3,
+            )
 
-        if simulate_low_confidence:
-            # Flatten scores so no single class dominates
-            for k in scores:
-                scores[k] = 30.0 + (k % 7)
+            MODEL_TO_METADATA = {
+                "bacterial_leaf_blight": {
+                    "code": "PAD-BLB-003",
+                    "name_en": "Paddy Bacterial Leaf Blight",
+                    "name_te": "వరి బాక్టీరియా ఆకు ఎండు తెగులు (BLB)",
+                    "scientific_name": "Xanthomonas oryzae pv. oryzae",
+                },
+                "bacterial_leaf_streak": {
+                    "code": "PAD-BLS-011",
+                    "name_en": "Paddy Bacterial Leaf Streak",
+                    "name_te": "వరి బాక్టీరియా ఆకు చార తెగులు",
+                    "scientific_name": "Xanthomonas oryzae pv. oryzicola",
+                },
+                "bacterial_panicle_blight": {
+                    "code": "PAD-BPB-012",
+                    "name_en": "Paddy Bacterial Panicle Blight",
+                    "name_te": "వరి కంకి బాక్టీరియా తెగులు",
+                    "scientific_name": "Bacterial panicle disease",
+                },
+                "blast": {
+                    "code": "PAD-BLA-001",
+                    "name_en": "Paddy Blast",
+                    "name_te": "వరి అగ్గితెగులు (Rice Blast)",
+                    "scientific_name": "Pyricularia oryzae",
+                },
+                "brown_spot": {
+                    "code": "PAD-BRS-002",
+                    "name_en": "Paddy Brown Spot",
+                    "name_te": "వరి ఆకు మచ్చ తెగులు (Brown Spot)",
+                    "scientific_name": "Bipolaris oryzae",
+                },
+                "dead_heart": {
+                    "code": "PAD-DHT-013",
+                    "name_en": "Paddy Dead Heart",
+                    "name_te": "వరి ఎండు గుండె లక్షణం (Dead Heart)",
+                    "scientific_name": "Stem borer damage",
+                },
+                "downy_mildew": {
+                    "code": "PAD-DWM-014",
+                    "name_en": "Paddy Downy Mildew",
+                    "name_te": "వరి డౌనీ మిల్డ్యూ తెగులు",
+                    "scientific_name": "Downy mildew",
+                },
+                "hispa": {
+                    "code": "PAD-HIS-015",
+                    "name_en": "Paddy Hispa",
+                    "name_te": "వరి హిస్పా పురుగు నష్టం",
+                    "scientific_name": "Dicladispa armigera",
+                },
+                "normal": {
+                    "code": "GEN-HLT-010",
+                    "name_en": "Healthy Paddy Leaf",
+                    "name_te": "ఆరోగ్యకరమైన వరి ఆకు",
+                    "scientific_name": "Normal Plant Foliage",
+                },
+                "tungro": {
+                    "code": "PAD-TUN-016",
+                    "name_en": "Paddy Tungro",
+                    "name_te": "వరి టుంగ్రో తెగులు",
+                    "scientific_name": "Rice tungro disease",
+                },
+            }
 
-        # Softmax normalization
-        exp_scores = {k: math.exp(v / 15.0) for k, v in scores.items()}
-        sum_exp = sum(exp_scores.values())
-        probs = {k: exp_scores[k] / sum_exp for k in exp_scores}
+            top_candidates = []
 
-        # Sort top-3
-        sorted_candidates = sorted(probs.items(), key=lambda x: x[1], reverse=True)
-        top_candidates = []
-        for class_id, prob in sorted_candidates[:3]:
-            cls_info = next((d for d in DISEASE_CLASSES if d["id"] == class_id), None)
-            if cls_info:
-                top_candidates.append({
-                    "id": cls_info["id"],
-                    "code": cls_info["code"],
-                    "name_en": cls_info["name_en"],
-                    "name_te": cls_info["name_te"],
-                    "scientific_name": cls_info["scientific_name"],
-                    "confidence_pct": round(prob * 100, 1),
-                    "probability": round(prob, 3)
-                })
+            for item in model_prediction["top_predictions"]:
+                label = item["class"]
+                metadata = MODEL_TO_METADATA.get(label)
 
-        primary = top_candidates[0]
-        top_prob = primary["probability"]
+                if metadata is None:
+                    continue
 
-        # Prediction Confidence vs. Decision Confidence
-        pred_confidence_pct = primary["confidence_pct"]
-        if simulate_low_confidence or top_prob < 0.45:
-            decision_confidence = "LOW"
-            decision_state = "VERIFY"
-            decision_state_te = "ధృవీకరించండి (VERIFY)"
-        elif top_prob < 0.70 or lesion_pct < 5.0:
-            decision_confidence = "MODERATE"
-            decision_state = "MONITOR"
-            decision_state_te = "వేచి చూడండి (MONITOR)"
+                top_candidates.append(
+                    {
+                        "id": label,
+                        "code": metadata["code"],
+                        "name_en": metadata["name_en"],
+                        "name_te": metadata["name_te"],
+                        "scientific_name": metadata["scientific_name"],
+                        "confidence_pct": item["confidence_percent"],
+                        "probability": item["confidence"],
+                    }
+                )
+
+            if not top_candidates:
+                return {
+                    "valid": False,
+                    "rejection_reason_en": "The vision model could not produce a valid class.",
+                    "rejection_reason_te": "విజన్ మోడల్ సరైన వర్గాన్ని గుర్తించలేకపోయింది.",
+                    "quality_details": quality,
+                    "is_out_of_domain": False,
+                }
+
+            primary = top_candidates[0]
+
+            # Preserve the existing decision-confidence logic,
+            # but now base it on the real model probability.
+            top_prob = float(primary["probability"])
+
+            pred_confidence_pct = float(
+                primary["confidence_pct"]
+            )
+
+            if simulate_low_confidence or top_prob < 0.45:
+                decision_confidence = "LOW"
+                decision_state = "VERIFY"
+                decision_state_te = "ధృవీకరించండి (VERIFY)"
+            elif top_prob < 0.70:
+                decision_confidence = "MODERATE"
+                decision_state = "MONITOR"
+                decision_state_te = "వేచి చూడండి (MONITOR)"
+            else:
+                decision_confidence = "HIGH"
+                decision_state = "ACT_NOW"
+                decision_state_te = "ఇప్పుడు చేయండి (ACT NOW)"
+
         else:
-            decision_confidence = "HIGH"
-            decision_state = "ACT_NOW"
-            decision_state_te = "ఇప్పుడు చేయండి (ACT NOW)"
+            # Legacy contextual fallback for crops without a trained
+            # crop-specific model. This is deliberately not presented
+            # as ResNet inference.
+            lesion_pct = vitality["lesion_coverage_pct"]
+            gy_ratio = vitality["green_yellow_ratio"]
+
+            crop_candidates = [
+                d
+                for d in DISEASE_CLASSES
+                if d["crop"] == crop or d["crop"] == "all"
+            ]
+
+            if not crop_candidates:
+                crop_candidates = DISEASE_CLASSES
+
+            scores = {}
+
+            for c in crop_candidates:
+                base = 10.0
+                name_lower = c["name_en"].lower()
+
+                if (
+                    "blast" in name_lower
+                    and (
+                        "మచ్చ" in user_notes
+                        or "spot" in user_notes
+                        or lesion_pct > 8
+                    )
+                ):
+                    base += 40.0
+
+                if (
+                    "brown spot" in name_lower
+                    and (
+                        "brown" in user_notes
+                        or "గోధుమ" in user_notes
+                        or lesion_pct > 5
+                    )
+                ):
+                    base += 35.0
+
+                if (
+                    "blight" in name_lower
+                    and (
+                        "ఎండు" in user_notes
+                        or "blight" in user_notes
+                        or gy_ratio < 1.0
+                    )
+                ):
+                    base += 38.0
+
+                if (
+                    "curl" in name_lower
+                    and (
+                        "ముడత" in user_notes
+                        or "curl" in user_notes
+                    )
+                ):
+                    base += 45.0
+
+                if (
+                    "rust" in name_lower
+                    and (
+                        "తుప్పు" in user_notes
+                        or "rust" in user_notes
+                    )
+                ):
+                    base += 42.0
+
+                if "healthy" in name_lower:
+                    if lesion_pct < 3.0 and gy_ratio > 2.0:
+                        base += 60.0
+                    else:
+                        base = 5.0
+
+                scores[c["id"]] = base + (
+                    c["id"] * 3.7
+                ) % 15.0
+
+            if simulate_low_confidence:
+                for k in scores:
+                    scores[k] = 30.0 + (k % 7)
+
+            exp_scores = {
+                k: math.exp(v / 15.0)
+                for k, v in scores.items()
+            }
+
+            sum_exp = sum(exp_scores.values())
+
+            probs = {
+                k: exp_scores[k] / sum_exp
+                for k in exp_scores
+            }
+
+            sorted_candidates = sorted(
+                probs.items(),
+                key=lambda x: x[1],
+                reverse=True,
+            )
+
+            top_candidates = []
+
+            for class_id, prob in sorted_candidates[:3]:
+                cls_info = next(
+                    (
+                        d
+                        for d in DISEASE_CLASSES
+                        if d["id"] == class_id
+                    ),
+                    None,
+                )
+
+                if cls_info:
+                    top_candidates.append(
+                        {
+                            "id": cls_info["id"],
+                            "code": cls_info["code"],
+                            "name_en": cls_info["name_en"],
+                            "name_te": cls_info["name_te"],
+                            "scientific_name": cls_info[
+                                "scientific_name"
+                            ],
+                            "confidence_pct": round(
+                                prob * 100,
+                                1,
+                            ),
+                            "probability": round(
+                                prob,
+                                3,
+                            ),
+                        }
+                    )
+
+            primary = top_candidates[0]
+            top_prob = primary["probability"]
+
+            pred_confidence_pct = primary[
+                "confidence_pct"
+            ]
+
+            if (
+                simulate_low_confidence
+                or top_prob < 0.45
+            ):
+                decision_confidence = "LOW"
+                decision_state = "VERIFY"
+                decision_state_te = (
+                    "ధృవీకరించండి (VERIFY)"
+                )
+            elif top_prob < 0.70:
+                decision_confidence = "MODERATE"
+                decision_state = "MONITOR"
+                decision_state_te = (
+                    "వేచి చూడండి (MONITOR)"
+                )
+            else:
+                decision_confidence = "HIGH"
+                decision_state = "ACT_NOW"
+                decision_state_te = (
+                    "ఇప్పుడు చేయండి (ACT NOW)"
+                )
 
         # Step 5: Weather context
         weather = weather_override or {
