@@ -1,184 +1,639 @@
-.counter {
-  font-size: 16px;
-  padding: 5px 10px;
-  border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-  margin-bottom: 24px;
+/* =========================================================
+   KRISHI-NETRA — PREMIUM PRODUCT UI SYSTEM
+   Global component polish, responsive surfaces & motion
+   ========================================================= */
 
-  &:hover {
-    border-color: var(--accent-border);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
+/* ---------- Design tokens ---------- */
+
+:root {
+  --kn-forest: #123d25;
+  --kn-forest-2: #18552f;
+  --kn-green: #3fae62;
+  --kn-green-dark: #287844;
+  --kn-mint: #eaf6ec;
+  --kn-mint-strong: #d8efdc;
+
+  --kn-earth: #f7f5ef;
+  --kn-surface: #ffffff;
+  --kn-surface-soft: #f3f7f1;
+
+  --kn-ink: #172019;
+  --kn-ink-soft: #536057;
+  --kn-muted: #7b857e;
+
+  --kn-border: #e1e8df;
+  --kn-border-strong: #cbd8ca;
+
+  --kn-warning: #d99a16;
+  --kn-danger: #c94b45;
+  --kn-success: #32884f;
+
+  --kn-radius-sm: 10px;
+  --kn-radius-md: 16px;
+  --kn-radius-lg: 22px;
+  --kn-radius-xl: 28px;
+
+  --kn-shadow-sm: 0 2px 10px rgba(18, 61, 37, 0.06);
+  --kn-shadow-md: 0 8px 28px rgba(18, 61, 37, 0.09);
+  --kn-shadow-lg: 0 18px 50px rgba(18, 61, 37, 0.12);
+
+  --kn-transition: 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.hero {
+/* ---------- App shell ---------- */
+
+#root {
+  min-height: 100vh;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  overflow-x: hidden;
+  background: var(--kn-earth);
+}
+
+/* ---------- Selection ---------- */
+
+::selection {
+  background: var(--kn-mint-strong);
+  color: var(--kn-forest);
+}
+
+/* =========================================================
+   PREMIUM SURFACES
+   These classes can be used by existing/new components.
+   ========================================================= */
+
+.kn-card {
+  background: var(--kn-surface);
+  border: 1px solid var(--kn-border);
+  border-radius: var(--kn-radius-lg);
+  box-shadow: var(--kn-shadow-sm);
+  transition:
+    transform var(--kn-transition),
+    box-shadow var(--kn-transition),
+    border-color var(--kn-transition);
+}
+
+.kn-card:hover {
+  border-color: var(--kn-border-strong);
+  box-shadow: var(--kn-shadow-md);
+}
+
+.kn-card-interactive {
+  cursor: pointer;
+}
+
+.kn-card-interactive:hover {
+  transform: translateY(-2px);
+}
+
+.kn-card-interactive:active {
+  transform: translateY(0);
+}
+
+.kn-glass {
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow: var(--kn-shadow-md);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* ---------- Green hero surface ---------- */
+
+.kn-hero {
   position: relative;
+  overflow: hidden;
+  color: #ffffff;
+  background:
+    radial-gradient(
+      circle at 88% 15%,
+      rgba(111, 193, 126, 0.3),
+      transparent 32%
+    ),
+    linear-gradient(135deg, var(--kn-forest) 0%, var(--kn-forest-2) 100%);
+  border-radius: var(--kn-radius-xl);
+  box-shadow: var(--kn-shadow-lg);
+}
 
-  .base,
-  .framework,
-  .vite {
-    inset-inline: 0;
-    margin: 0 auto;
+.kn-hero::before {
+  content: "";
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  right: -70px;
+  bottom: -100px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+}
+
+.kn-hero::after {
+  content: "";
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  right: 45px;
+  bottom: -90px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+}
+
+/* ---------- Soft green panels ---------- */
+
+.kn-green-panel {
+  background: linear-gradient(
+    145deg,
+    var(--kn-mint) 0%,
+    #f6fbf5 100%
+  );
+  border: 1px solid #d9eadb;
+  border-radius: var(--kn-radius-lg);
+}
+
+.kn-green-panel-strong {
+  background: linear-gradient(
+    145deg,
+    #dff2e2 0%,
+    #eff9f0 100%
+  );
+  border: 1px solid #c8e4cc;
+  border-radius: var(--kn-radius-lg);
+}
+
+/* =========================================================
+   PREMIUM BUTTONS
+   ========================================================= */
+
+.kn-btn {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 11px 18px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  font-weight: 750;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    transform var(--kn-transition),
+    box-shadow var(--kn-transition),
+    background var(--kn-transition),
+    border-color var(--kn-transition);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.kn-btn:hover {
+  transform: translateY(-1px);
+}
+
+.kn-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.kn-btn:focus-visible {
+  outline: 3px solid rgba(63, 174, 98, 0.35);
+  outline-offset: 3px;
+}
+
+.kn-btn-primary {
+  color: #ffffff;
+  background: linear-gradient(
+    135deg,
+    var(--kn-green-dark),
+    var(--kn-green)
+  );
+  box-shadow: 0 8px 22px rgba(40, 120, 68, 0.22);
+}
+
+.kn-btn-primary:hover {
+  box-shadow: 0 11px 28px rgba(40, 120, 68, 0.28);
+}
+
+.kn-btn-secondary {
+  color: var(--kn-forest);
+  background: var(--kn-mint);
+  border-color: #d5e8d8;
+}
+
+.kn-btn-secondary:hover {
+  background: var(--kn-mint-strong);
+}
+
+.kn-btn-ghost {
+  color: var(--kn-forest);
+  background: transparent;
+  border-color: var(--kn-border);
+}
+
+.kn-btn-ghost:hover {
+  background: var(--kn-surface-soft);
+}
+
+/* ---------- Icon button ---------- */
+
+.kn-icon-btn {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--kn-border);
+  border-radius: 14px;
+  background: var(--kn-surface);
+  color: var(--kn-forest);
+  cursor: pointer;
+  transition:
+    transform var(--kn-transition),
+    background var(--kn-transition),
+    box-shadow var(--kn-transition);
+}
+
+.kn-icon-btn:hover {
+  transform: translateY(-1px);
+  background: var(--kn-mint);
+  box-shadow: var(--kn-shadow-sm);
+}
+
+.kn-icon-btn:active {
+  transform: scale(0.96);
+}
+
+.kn-icon-btn:focus-visible {
+  outline: 3px solid rgba(63, 174, 98, 0.35);
+  outline-offset: 2px;
+}
+
+/* =========================================================
+   STATUS / RISK BADGES
+   ========================================================= */
+
+.kn-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.kn-badge-green {
+  color: #216638;
+  background: #e4f4e7;
+  border: 1px solid #c9e7cf;
+}
+
+.kn-badge-warning {
+  color: #79550a;
+  background: #fff3d5;
+  border: 1px solid #f0dda8;
+}
+
+.kn-badge-danger {
+  color: #853833;
+  background: #fde9e7;
+  border: 1px solid #f2cbc7;
+}
+
+.kn-badge-neutral {
+  color: #526057;
+  background: #eef2ee;
+  border: 1px solid #dfe6df;
+}
+
+/* ---------- Live indicator ---------- */
+
+.kn-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.kn-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--kn-green);
+  box-shadow: 0 0 0 5px rgba(63, 174, 98, 0.12);
+  animation: kn-live-pulse 2.2s ease-in-out infinite;
+}
+
+@keyframes kn-live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 4px rgba(63, 174, 98, 0.12);
   }
 
-  .base {
-    width: 170px;
-    position: relative;
-    z-index: 0;
-  }
-
-  .framework,
-  .vite {
-    position: absolute;
-  }
-
-  .framework {
-    z-index: 1;
-    top: 34px;
-    height: 28px;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
-      scale(1.4);
-  }
-
-  .vite {
-    z-index: 0;
-    top: 107px;
-    height: 26px;
-    width: auto;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
-      scale(0.8);
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 0 8px rgba(63, 174, 98, 0.04);
   }
 }
 
-#center {
+/* =========================================================
+   TYPOGRAPHY HELPERS
+   ========================================================= */
+
+.kn-eyebrow {
+  color: var(--kn-green-dark);
+  font-size: 0.72rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.kn-title {
+  color: var(--kn-ink);
+  font-weight: 850;
+  letter-spacing: -0.035em;
+}
+
+.kn-muted {
+  color: var(--kn-ink-soft);
+}
+
+/* =========================================================
+   FARMER-FRIENDLY DATA ROW
+   ========================================================= */
+
+.kn-data-row {
   display: flex;
-  flex-direction: column;
-  gap: 25px;
-  place-content: center;
-  place-items: center;
-  flex-grow: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--kn-border);
+}
 
-  @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
-    gap: 18px;
+.kn-data-row:last-child {
+  border-bottom: none;
+}
+
+.kn-data-value {
+  color: var(--kn-ink);
+  font-weight: 800;
+}
+
+/* =========================================================
+   PROGRESS / RISK VISUALS
+   ========================================================= */
+
+.kn-progress {
+  width: 100%;
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e6ece5;
+}
+
+.kn-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    var(--kn-green-dark),
+    var(--kn-green)
+  );
+  transition: width 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* =========================================================
+   IMAGE / CROP PRESENTATION
+   ========================================================= */
+
+.kn-crop-image {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--kn-radius-lg);
+  background: var(--kn-mint);
+}
+
+.kn-crop-image img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  transition: transform 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.kn-crop-image:hover img {
+  transform: scale(1.025);
+}
+
+/* =========================================================
+   SCAN ANIMATION
+   ========================================================= */
+
+.kn-scan-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--kn-radius-lg);
+}
+
+.kn-scan-frame::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: -20%;
+  height: 25%;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(91, 210, 115, 0.18),
+    rgba(91, 210, 115, 0.55),
+    transparent
+  );
+  animation: kn-scan-sweep 2.3s linear infinite;
+}
+
+@keyframes kn-scan-sweep {
+  0% {
+    transform: translateY(-120%);
+  }
+
+  100% {
+    transform: translateY(520%);
   }
 }
 
-#next-steps {
-  display: flex;
-  border-top: 1px solid var(--border);
-  text-align: left;
+/* =========================================================
+   PAGE ENTER MOTION
+   ========================================================= */
 
-  & > div {
-    flex: 1 1 0;
-    padding: 32px;
-    @media (max-width: 1024px) {
-      padding: 24px 20px;
-    }
+.kn-page-enter {
+  animation: kn-page-enter 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes kn-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
 
-  .icon {
-    margin-bottom: 16px;
-    width: 22px;
-    height: 22px;
-  }
-
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    text-align: center;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-#docs {
-  border-right: 1px solid var(--border);
+/* =========================================================
+   SOFT FLOAT
+   ========================================================= */
 
-  @media (max-width: 1024px) {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
+.kn-float {
+  animation: kn-float 4.5s ease-in-out infinite;
+}
+
+@keyframes kn-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
   }
 }
 
-#next-steps ul {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  gap: 8px;
-  margin: 32px 0 0;
+/* =========================================================
+   MOBILE PRODUCT LAYOUT
+   ========================================================= */
 
-  .logo {
-    height: 18px;
-  }
+.kn-mobile-section {
+  width: 100%;
+  padding-inline: 16px;
+  box-sizing: border-box;
+}
 
-  a {
-    color: var(--text-h);
-    font-size: 16px;
-    border-radius: 6px;
-    background: var(--social-bg);
-    display: flex;
-    padding: 6px 12px;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: box-shadow 0.3s;
-
-    &:hover {
-      box-shadow: var(--shadow);
-    }
-    .button-icon {
-      height: 18px;
-      width: 18px;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    margin-top: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-
-    li {
-      flex: 1 1 calc(50% - 8px);
-    }
-
-    a {
-      width: 100%;
-      justify-content: center;
-      box-sizing: border-box;
-    }
+@media (min-width: 640px) {
+  .kn-mobile-section {
+    padding-inline: 24px;
   }
 }
 
-#spacer {
-  height: 88px;
-  border-top: 1px solid var(--border);
-  @media (max-width: 1024px) {
+@media (min-width: 1024px) {
+  .kn-mobile-section {
+    padding-inline: 32px;
+  }
+}
+
+/* ---------- Mobile touch targets ---------- */
+
+@media (max-width: 767px) {
+  button,
+  a,
+  [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .kn-btn {
+    min-height: 50px;
+  }
+
+  .kn-icon-btn {
+    width: 48px;
     height: 48px;
   }
+
+  .kn-card {
+    border-radius: 20px;
+  }
+
+  .kn-hero {
+    border-radius: 24px;
+  }
 }
 
-.ticks {
-  position: relative;
-  width: 100%;
+/* =========================================================
+   RESPONSIVE DESKTOP POLISH
+   ========================================================= */
 
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -4.5px;
-    border: 5px solid transparent;
+@media (min-width: 1024px) {
+  .kn-desktop-hover {
+    transition:
+      transform var(--kn-transition),
+      box-shadow var(--kn-transition);
   }
 
-  &::before {
-    left: 0;
-    border-left-color: var(--border);
+  .kn-desktop-hover:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--kn-shadow-md);
   }
-  &::after {
-    right: 0;
-    border-right-color: var(--border);
+}
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* =========================================================
+   HIGH CONTRAST COMPATIBILITY
+   ========================================================= */
+
+html.high-contrast .kn-card,
+html.high-contrast .kn-glass,
+html.high-contrast .kn-green-panel,
+html.high-contrast .kn-green-panel-strong {
+  border: 2px solid #000000 !important;
+  box-shadow: none !important;
+}
+
+html.high-contrast .kn-btn-primary {
+  background: #0d381e !important;
+  color: #ffffff !important;
+  border: 2px solid #000000 !important;
+}
+
+html.high-contrast .kn-btn-secondary,
+html.high-contrast .kn-btn-ghost {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 2px solid #000000 !important;
+}
+
+/* =========================================================
+   LARGE TEXT COMPATIBILITY
+   ========================================================= */
+
+html.large-text .kn-btn {
+  min-height: 52px;
+  font-size: 1rem;
+}
+
+html.large-text .kn-badge {
+  font-size: 0.86rem;
+}
+
+/* =========================================================
+   SAFE AREA — MOBILE DEVICES
+   ========================================================= */
+
+@supports (padding: max(0px)) {
+  .kn-safe-bottom {
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  .kn-safe-top {
+    padding-top: max(8px, env(safe-area-inset-top));
   }
 }

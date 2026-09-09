@@ -26,7 +26,9 @@ if PROJECT_ROOT not in sys.path:
 from ml.predictor import AgriculturalReasoningEngine, ImageQualityGate, CropVitalityEstimator, MODEL_METRICS
 from backend.knowledge import AgriculturalKnowledgeEngine, QueryIntentClassifier
 from backend.storage import FieldDataStore
-
+from backend.weather import get_weather_context
+from backend.risk_engine import calculate_risk
+from backend.trajectory import build_risk_trajectory, build_counterfactual
 app = FastAPI(
     title="KRISHI-NETRA Intelligence API",
     description="Context-Aware Crop Risk & Decision Intelligence for Smallholder Farmers",
@@ -54,7 +56,9 @@ class AnalyzeCropPayload(BaseModel):
     imageBase64: Optional[str] = None
     simulateLowConfidence: Optional[bool] = False
 
-
+class WeatherPayload(BaseModel):
+    latitude: float
+    longitude: float
 class AskQueryPayload(BaseModel):
     message: str
     crop: Optional[str] = "paddy"
@@ -160,29 +164,31 @@ def generate_tts_audio(text: str, language: str = "te") -> Dict[str, Any]:
 
 # Helper to decode image
 def _load_image_from_base64(b64_string: Optional[str]) -> Image.Image:
+    """
+    Decode a farmer-supplied image.
+
+    Missing or invalid images are rejected instead of manufacturing a
+    synthetic leaf image.
+    """
     if not b64_string:
-        # Generate a realistic leaf-green synthetic test image if no image was uploaded
-        import numpy as np
-        arr = (np.random.rand(256, 256, 3) * 120 + 40).astype(np.uint8)
-        arr[:, :, 1] = np.clip(arr[:, :, 1].astype(int) + 70, 0, 255)
-        # Add a couple of realistic brown spots
-        arr[80:120, 80:120, 0] = 140
-        arr[80:120, 80:120, 1] = 70
-        arr[80:120, 80:120, 2] = 40
-        return Image.fromarray(arr)
+        raise HTTPException(
+            status_code=400,
+            detail="A crop image is required for image analysis."
+        )
 
     if "," in b64_string:
         b64_string = b64_string.split(",", 1)[1]
 
     try:
-        data = base64.b64decode(b64_string)
+        data = base64.b64decode(b64_string, validate=True)
+        if not data:
+            raise ValueError("Empty image payload")
         return Image.open(io.BytesIO(data)).convert("RGB")
-    except Exception:
-        # Fallback to standard leaf image
-        import numpy as np
-        arr = (np.random.rand(256, 256, 3) * 120 + 40).astype(np.uint8)
-        arr[:, :, 1] = np.clip(arr[:, :, 1].astype(int) + 70, 0, 255)
-        return Image.fromarray(arr)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid crop image: {exc}"
+        )
 
 
 # ============================================================
@@ -289,12 +295,48 @@ def analyze_crop_image(payload: AnalyzeCropPayload):
             "audioTe": generate_tts_audio(f"ఫోటో స్పష్టంగా లేదు. {pred['rejection_reason_te']}", "te"),
             "audioEn": generate_tts_audio(f"Image quality check failed. {pred['rejection_reason_en']}", "en")
         }
-
-    # Format result for KRISHI-NETRA frontend
+            # Format predictor outputs before downstream reasoning engines use them.
     primary = pred["primary_diagnosis"]
     vitality = pred["vitality"]
     advisory = pred["advisory"]
-    what_if = pred["what_if"]
+
+    # ============================================================
+    # CONTEXT-AWARE RISK ENGINE
+    # ============================================================
+    risk = calculate_risk(
+        diagnosis=primary["code"],
+        confidence=float(primary["confidence_pct"]) / 100.0,
+        crop=crop,
+        stage=payload.stage,
+        weather={
+            "humidity_percent": float(weather_override["humidity"]),
+            "rain_probability_24h_percent": 70.0,
+            "rainfall_next_24h_mm": float(weather_override["rain_forecast_24h_mm"]),
+        },
+        soil_moisture=float(node.get("soilMoisture", 42.0)),
+        symptoms=payload.symptoms,
+    )
+
+    trajectory = build_risk_trajectory(
+        current_risk=risk["risk_score"],
+        risk_state=risk["risk_state"],
+        humidity=float(weather_override["humidity"]),
+        rain_probability=70.0,
+        rainfall_mm=float(weather_override["rain_forecast_24h_mm"]),
+        intervention=False,
+    )
+
+    counterfactual = build_counterfactual(
+        current_risk=risk["risk_score"],
+        humidity=float(weather_override["humidity"]),
+        rain_probability=70.0,
+    )
+
+    # Use the deterministic, explicitly labelled counterfactual model.
+    # This avoids mixing legacy biological-sounding claims into the scenario UI.
+    what_if = counterfactual
+
+    # Format result for KRISHI-NETRA frontend
 
     return {
         "id": f"scan-{crop}-{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}",
@@ -360,32 +402,65 @@ def analyze_crop_image(payload: AnalyzeCropPayload):
                 for i, item in enumerate(pred["evidence_check"]["items"])
             ]
         },
-        "riskForecast": [
-            {"timeframe": "now", "labelTe": "ఇప్పుడు (Now)", "labelEn": "Now", "riskLevel": "watch", "riskScore": 42, "noteTe": "ప్రారంభ దశ, అదుపు చేయడం సాధ్యం.", "noteEn": "Manageable foliar footprint with timely hygiene."},
-            {"timeframe": "24h", "labelTe": "24 గంటలు", "labelEn": "24 Hours", "riskLevel": "watch", "riskScore": 54, "noteTe": "తేమ వల్ల మచ్చల పరిమాణం పెరిగే అవకాశం.", "noteEn": "Humid conditions likely to expand lesion margins."},
-            {"timeframe": "48h", "labelTe": "48 గంటలు", "labelEn": "48 Hours", "riskLevel": "warning", "riskScore": 68, "noteTe": "చర్యలు తీసుకోకపోతే పక్క ఆకులకు విస్తరించవచ్చు.", "noteEn": "Risk of secondary dispersal to surrounding foliage."},
-            {"timeframe": "7d", "labelTe": "7 రోజులు", "labelEn": "7 Days", "riskLevel": "high", "riskScore": 82, "noteTe": "ఆకులు రాలిపోయి దిగుబడి తగ్గే ప్రమాదం.", "noteEn": "Premature defoliation risk without intervention."}
+                "riskForecast": [
+            {
+                "timeframe": "now",
+                "labelTe": "ఇప్పుడు",
+                "labelEn": "Now",
+                "riskLevel": trajectory["current"]["state"].lower(),
+                "riskScore": trajectory["current"]["risk_score"],
+                "noteTe": "ప్రస్తుత ఆధారాల ఆధారంగా ప్రమాద స్థాయి.",
+                "noteEn": "Current decision risk from available evidence."
+            },
+            {
+                "timeframe": "24h",
+                "labelTe": "24 గంటలు",
+                "labelEn": "24 Hours",
+                "riskLevel": trajectory["h24"]["state"].lower(),
+                "riskScore": trajectory["h24"]["risk_score"],
+                "noteTe": "ప్రస్తుత పర్యావరణ పరిస్థితుల ఆధారంగా మోడల్ పరిస్థితి.",
+                "noteEn": "Model scenario under current environmental conditions."
+            },
+            {
+                "timeframe": "48h",
+                "labelTe": "48 గంటలు",
+                "labelEn": "48 Hours",
+                "riskLevel": trajectory["h48"]["state"].lower(),
+                "riskScore": trajectory["h48"]["risk_score"],
+                "noteTe": "పరిశీలన ఆలస్యం అయితే ప్రమాదం పెరగవచ్చు.",
+                "noteEn": "Decision risk may increase if verification is delayed."
+            },
+            {
+                "timeframe": "7d",
+                "labelTe": "7 రోజులు",
+                "labelEn": "7 Days",
+                "riskLevel": trajectory["d7"]["state"].lower(),
+                "riskScore": trajectory["d7"]["risk_score"],
+                "noteTe": "ఇది మోడల్ ఆధారిత నిర్ణయ పరిస్థితి మాత్రమే.",
+                "noteEn": "This is a model-based decision scenario only."
+            }
         ],
-        "whatIf": {
+                "whatIf": {
+            "label": counterfactual["label"],
             "actNow": {
                 "titleTe": "ఇప్పుడు చర్య తీసుకుంటే",
                 "titleEn": "If Action Taken Today",
-                "riskTrend": "down",
-                "expectedRiskScore": 22,
-                "descriptionTe": what_if["if_act_today"]["outcome_te"],
-                "descriptionEn": what_if["if_act_today"]["outcome_en"],
-                "outcomeTe": "వ్యాప్తి అదుపులోకి వచ్చి పంట సురక్షితంగా ఉంటుంది (AI మోడల్ అంచనా).",
-                "outcomeEn": "Fungal progression halted within 48 hours (AI model scenario)."
+                "riskTrend": "down" if counterfactual["if_act_today"]["risk_trend"] == "decreasing" else "stable",
+                "expectedRiskScore": counterfactual["if_act_today"]["risk_score"],
+                "descriptionTe": counterfactual["if_act_today"]["outcome_te"],
+                "descriptionEn": counterfactual["if_act_today"]["outcome_en"],
+                "outcomeTe": counterfactual["if_act_today"]["outcome_te"],
+                "outcomeEn": counterfactual["if_act_today"]["outcome_en"]
             },
             "waitAndWatch": {
                 "titleTe": "ఏమీ చేయకుండా వేచి ఉంటే",
                 "titleEn": "If You Wait & Delay",
-                "riskTrend": "up",
-                "expectedRiskScore": 82,
-                "descriptionTe": what_if["if_wait"]["outcome_te"],
-                "descriptionEn": what_if["if_wait"]["outcome_en"],
-                "outcomeTe": "మచ్చలు ఎక్కువై పక్క మొక్కలకు విస్తరిస్తాయి (AI మోడల్ అంచనా).",
-                "outcomeEn": "Canopy humidity enables rapid spore dissemination (AI model scenario)."
+                "riskTrend": "up" if counterfactual["if_wait"]["risk_trend"] == "increasing" else "stable",
+                "expectedRiskScore": counterfactual["if_wait"]["risk_score"],
+                "descriptionTe": counterfactual["if_wait"]["outcome_te"],
+                "descriptionEn": counterfactual["if_wait"]["outcome_en"],
+                "outcomeTe": counterfactual["if_wait"]["outcome_te"],
+                "outcomeEn": counterfactual["if_wait"]["outcome_en"]
             }
         },
         "actionPlan": {
@@ -475,7 +550,7 @@ def ask_krishi_netra(payload: AskQueryPayload):
 
     print(
         f"[AUDIT LOG] REQUEST: ASK | LANG: {lang_code} | INTENT: {result['intent']} | "
-        f"CONFIDENCE: 0.88 | DECISION: MODERATE | TTS_LANG: {lang_code} | AUDIO: {audio_obj.get('status', 'ready')}"
+        f"CONFIDENCE: context-derived | DECISION: knowledge-grounded | TTS_LANG: {lang_code} | AUDIO: {audio_obj.get('status', 'ready')}"
     )
 
     return {
@@ -543,7 +618,36 @@ def toggle_action(action_id: str):
     """Toggles action completion status."""
     updated = FieldDataStore.toggle_action_status(action_id)
     return {"status": "success", "action": updated}
+@app.get("/api/follow-ups")
+def get_follow_ups():
+    """
+    Returns farmer actions whose verification time has arrived.
+    """
+    due = FieldDataStore.get_due_follow_ups()
 
+    return {
+        "count": len(due),
+        "followUps": due
+    }
+
+
+@app.post("/api/follow-ups/{action_id}/complete")
+def complete_follow_up(action_id: str):
+    """
+    Marks a post-action verification as completed.
+    """
+    updated = FieldDataStore.complete_follow_up(action_id)
+
+    if not updated:
+        raise HTTPException(
+            status_code=404,
+            detail="Action not found"
+        )
+
+    return {
+        "status": "success",
+        "action": updated
+    }
 
 @app.get("/api/timeline")
 @app.get("/api/field")
@@ -642,6 +746,8 @@ def submit_feedback(payload: FeedbackPayload):
     return {"status": "success", "receivedAt": datetime.datetime.now().isoformat()}
 
 
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)
+
