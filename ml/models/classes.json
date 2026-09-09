@@ -1,0 +1,112 @@
+[
+  {
+    "id": 0,
+    "code": "PAD-BLA-001",
+    "crop": "paddy",
+    "name_en": "Paddy Blast",
+    "scientific_name": "Pyricularia oryzae",
+    "name_te": "వరి అగ్గితెగులు (Rice Blast)",
+    "symptoms_en": "Spindle-shaped or diamond-shaped lesions with brownish margins and gray centers on leaves.",
+    "symptoms_te": "ఆకులపై వజ్రాకారపు లేదా కదురు ఆకారపు బూడిద రంగు కేంద్రం గల గోధుమ రంగు మచ్చలు.",
+    "favorable_conditions": "High humidity >85%, temperatures 22-28°C, night dew, excessive nitrogen fertilizer."
+  },
+  {
+    "id": 1,
+    "code": "PAD-BRS-002",
+    "crop": "paddy",
+    "name_en": "Paddy Brown Spot",
+    "scientific_name": "Bipolaris oryzae",
+    "name_te": "వరి ఆకు మచ్చ తెగులు (Brown Spot)",
+    "symptoms_en": "Oval to circular brown spots with yellow halos evenly distributed on leaf blade.",
+    "symptoms_te": "ఆకు అంతటా వలయాకారపు ముదురు గోధుమ రంగు మచ్చలు మరియు పసుపు రంగు వలయాలు.",
+    "favorable_conditions": "Moisture stress, nutrient-deficient sandy soils, relative humidity 80-90%."
+  },
+  {
+    "id": 2,
+    "code": "PAD-BLB-003",
+    "crop": "paddy",
+    "name_en": "Paddy Bacterial Leaf Blight",
+    "scientific_name": "Xanthomonas oryzae pv. oryzae",
+    "name_te": "వరి బాక్టీరియా ఆకు ఎండు తెగులు (BLB)",
+    "symptoms_en": "Water-soaked streaks beginning at leaf margins, turning yellow to straw-colored with wavy edges.",
+    "symptoms_te": "ఆకు అంచుల నుండి ప్రారంభమయ్యే చారలు, పసుపు రంగులోకి మారి చివరకు ఎండుగడ్డి రంగులోకి మారడం.",
+    "favorable_conditions": "Heavy rainfall with strong winds, temperatures 25-34°C, deep stagnant water."
+  },
+  {
+    "id": 3,
+    "code": "PAD-LSC-004",
+    "crop": "paddy",
+    "name_en": "Paddy Leaf Scald",
+    "scientific_name": "Microdochium oryzae",
+    "name_te": "వరి ఆకు ముడత / మాడు తెగులు (Leaf Scald)",
+    "symptoms_en": "Zonate bands of light brown and dark brown extending from leaf tips downward.",
+    "symptoms_te": "ఆకు చివర్ల నుండి కిందకి విస్తరించే లేత మరియు ముదురు గోధుమ రంగు చారల పట్టీలు.",
+    "favorable_conditions": "Wet weather, close plant spacing, high nitrogen application."
+  },
+  {
+    "id": 4,
+    "code": "PAD-SHB-005",
+    "crop": "paddy",
+    "name_en": "Paddy Sheath Blight",
+    "scientific_name": "Rhizoctonia solani",
+    "name_te": "వరి పొడ తెగులు (Sheath Blight)",
+    "symptoms_en": "Greenish-gray oval lesions on leaf sheath near waterline, spreading to upper leaves.",
+    "symptoms_te": "నీటి మట్టానికి దగ్గరగా ఉండే ఆకు తొడుగుపై ఆకుపచ్చని-బూడిద రంగు మచ్చలు ఏర్పడి పైకి విస్తరించడం.",
+    "favorable_conditions": "High relative humidity (95-100%), temperature 28-32°C, dense plant canopy."
+  },
+  {
+    "id": 5,
+    "code": "COT-CLS-006",
+    "crop": "cotton",
+    "name_en": "Cotton Leaf Spot",
+    "scientific_name": "Cercospora gossypina",
+    "name_te": "పత్తి ఆకు మచ్చల తెగులు (Cercospora)",
+    "symptoms_en": "Concentric reddish-brown circular spots with purplish margins on mature foliage.",
+    "symptoms_te": "ముదిరిన ఆకులపై ఎరుపు-గోధుమ రంగు వలయాకారపు మచ్చలు మరియు ఊదా రంగు అంచులు.",
+    "favorable_conditions": "Nutrient stress (especially potassium deficiency), alternating wet and dry periods, 25-30°C."
+  },
+  {
+    "id": 6,
+    "code": "COT-BLB-007",
+    "crop": "cotton",
+    "name_en": "Cotton Bacterial Blight",
+    "scientific_name": "Xanthomonas citri pv. malvacearum",
+    "name_te": "పత్తి బాక్టీరియల్ బ్లైట్ / కోణీయ మచ్చ (Angular Leaf Spot)",
+    "symptoms_en": "Angular water-soaked spots bounded by leaf veins, turning dark brown/black.",
+    "symptoms_te": "ఆకు ఈనెల మధ్య కోణాకారంలో ఏర్పడే నీటి తడి మచ్చలు, తరువాత నల్లగా మారడం.",
+    "favorable_conditions": "Warm humid conditions, rainstorms splashing bacteria onto canopy."
+  },
+  {
+    "id": 7,
+    "code": "CHI-LCV-008",
+    "crop": "chilli",
+    "name_en": "Chilli Leaf Curl",
+    "scientific_name": "Chilli Leaf Curl Virus (Begomovirus)",
+    "name_te": "మిర్చి ఆకుముడత తెగులు (Leaf Curl)",
+    "symptoms_en": "Upward curling of leaves, crinkling, stunted internodes, vector: whitefly.",
+    "symptoms_te": "ఆకులు పైకి దోనెలా ముడుచుకుపోవడం, కణుపులు చిన్నవై మొక్క గిడసబారిపోవడం.",
+    "favorable_conditions": "Dry warm weather favoring Bemisia tabaci whitefly vector populations."
+  },
+  {
+    "id": 8,
+    "code": "MAI-RST-009",
+    "crop": "maize",
+    "name_en": "Maize Common Rust",
+    "scientific_name": "Puccinia sorghi",
+    "name_te": "మొక్కజొన్న తుప్పు తెగులు (Common Rust)",
+    "symptoms_en": "Small powdery cinnamon-brown pustules scattered on upper and lower leaf surfaces.",
+    "symptoms_te": "ఆకుల రెండు వైపులా కనిపించే చిన్న దాల్చిన చెక్క రంగు తుప్పు పొక్కులు.",
+    "favorable_conditions": "Cool temperatures 16-25°C, high relative humidity (near 100%), dew periods."
+  },
+  {
+    "id": 9,
+    "code": "GEN-HLT-010",
+    "crop": "all",
+    "name_en": "Healthy Leaf",
+    "scientific_name": "Normal Plant Foliage",
+    "name_te": "ఆరోగ్యకరమైన ఆకు (Healthy Foliage)",
+    "symptoms_en": "Uniform green pigmentation, intact lamina, no visible necrotic lesions or chlorotic streaks.",
+    "symptoms_te": "సహజమైన ఆకుపచ్చ రంగు, ఎటువంటి మచ్చలు లేదా తెగులు సంకేతాలు లేని స్థితి.",
+    "favorable_conditions": "Optimal balanced nutrition, adequate soil aeration, disease-free canopy."
+  }
+]

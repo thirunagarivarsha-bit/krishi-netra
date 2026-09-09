@@ -1,0 +1,46 @@
+# Node
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Python
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Datasets and large training artifacts
+data/
+datasets/
+*.zip
+
+# Generated/cache files
+backend/data/audio_cache/
+*.mp3
+
+# IDE / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
